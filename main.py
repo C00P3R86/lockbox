@@ -1,6 +1,7 @@
 import os
 from pynput import keyboard
 
+terminalSize = 0
 startText = 'LockBox'
 currentMenu = 0
 
@@ -64,9 +65,18 @@ def HearForInput():
 
 def Main():
     #Main Loop
+    global terminalSize
+    terminalSize = os.get_terminal_size()
+    width = terminalSize.columns
+
     os.system("cls")
-    print("LockBox")
+
+    halfWidth = width // 2
+    for i in range(halfWidth):
+        print("-", end="")
+    print(" LockBox")
     MainMenu()
+    print("Console width:", width)
     HearForInput()
 
 Main()
