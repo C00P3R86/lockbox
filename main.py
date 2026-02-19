@@ -1,5 +1,6 @@
 import os
 import queue
+import msvcrt
 from pynput import keyboard
 
 terminalSize = 0
@@ -63,17 +64,35 @@ def PasswordList():
     for name, pwd in pwdDict.items():
         print(f"{name}: {pwd}")
 
+def AskForPwd():
+    pwd = input("Enter Password: ")
+    if pwd == "":
+        print("Password is empty. Do you want to cancel? (Y = Yes / N = No):")
+        answer = input()
+        if answer.lower() == "y":
+            return None
+        elif answer.lower() == "n":
+            return AskForPwd()
+    else:
+        return pwd
+
 def AddPassword():
     global currentMenu, pwdDict
     currentMenu = 2
     os.system("cls")
     listener.stop()
+    while msvcrt.kbhit():
+        msvcrt.getwch()
     name = input("Enter Password Name (Leave empty to cancel): ")
     if name == "":
         StartListener()
         MainMenu()
         return
-    pwd = input("Enter Password: ")
+    pwd = AskForPwd()
+    if pwd == None:
+        StartListener()
+        MainMenu()
+        return
     pwdDict[name] = pwd
     print(pwdDict)
     StartListener()
@@ -103,6 +122,8 @@ def Main():
         match action:
             case "exit":
                 os.system("cls")
+                while msvcrt.kbhit():
+                    msvcrt.getwch()
                 exit()
             case "main_menu":
                 MainMenu()
