@@ -4,6 +4,8 @@ from pynput import keyboard
 terminalSize = 0
 startText = 'LockBox'
 currentMenu = 0
+listener = None
+pwdDict = dict(name = "", pwd = "")
 
 def on_press(key):
     #try:
@@ -29,6 +31,8 @@ def HandleInput(key):
                     exit()
                 case "l":
                     PasswordList()
+                case "a":
+                    AddPassword()
                 case _:
                     print("Invalid Key pressed")
         case 1:
@@ -38,11 +42,15 @@ def HandleInput(key):
                 case "e":
                     os.system("cls")
                     exit()
+        case 2:
+            match key:
+                case "c":
+                    MainMenu()
+                case "e":
+                    os.system("cls")
+                    exit()
 
 def MainMenu():
-    #with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
-    #    listener.join()
-    
     global currentMenu
     currentMenu = 0
     os.system("cls")
@@ -59,9 +67,26 @@ def PasswordList():
     print("Password 1")
     print("Password 2")
 
+def AddPassword():
+    global currentMenu
+    global pwdDict
+    currentMenu = 2
+    os.system("cls")
+    name = GetTextInput("Enter Password Name (Leave empty to cancel): ")
+    pwdDict[name] = name
+    print(pwdDict)
+
 def HearForInput():
+    global listener
     with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
         listener.join()
+
+def GetTextInput(prompt):
+    global listener
+    listener.stop()
+    text = input(prompt)
+    HearForInput()
+    return text
 
 def Main():
     #Main Loop
@@ -76,7 +101,7 @@ def Main():
         print("-", end="")
     print(" LockBox")
     MainMenu()
-    print("Console width:", width)
+    #print("Console width:", width)
     HearForInput()
 
 Main()
