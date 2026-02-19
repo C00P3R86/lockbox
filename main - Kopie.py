@@ -1,5 +1,4 @@
 import os
-import queue
 from pynput import keyboard
 
 terminalSize = 0
@@ -7,7 +6,6 @@ startText = 'LockBox'
 currentMenu = 0
 listener = None
 pwdDict = {}
-actionQueue = queue.Queue()
 
 def on_press(key):
     try:
@@ -15,7 +13,10 @@ def on_press(key):
     except AttributeError:
         pass
 
+    #HandleInput(key.char)
+
 def on_release(key):
+    #print(f"Key {key} was released")
     if key == keyboard.Key.esc:
         return False
 
@@ -26,25 +27,28 @@ def HandleInput(key):
             print("Current Menu: 0 is recognized")
             match key:
                 case "e":
-                    actionQueue.put("exit")
+                    os.system("cls")
+                    exit()
                 case "l":
-                    actionQueue.put("password_list")
+                    PasswordList()
                 case "a":
-                    actionQueue.put("add_password")
+                    AddPassword()
                 case _:
                     print("Invalid Key pressed")
         case 1:
             match key:
                 case "c":
-                    actionQueue.put("main_menu")
+                    MainMenu()
                 case "e":
-                    actionQueue.put("exit")
+                    os.system("cls")
+                    exit()
         case 2:
             match key:
                 case "c":
-                    actionQueue.put("main_menu")
+                    MainMenu()
                 case "e":
-                    actionQueue.put("exit")
+                    os.system("cls")
+                    exit()
 
 def MainMenu():
     global currentMenu
@@ -60,32 +64,36 @@ def PasswordList():
     currentMenu = 1
     os.system("cls")
     print("Password List")
-    for name, pwd in pwdDict.items():
-        print(f"{name}: {pwd}")
+    print("Password 1")
+    print("Password 2")
 
 def AddPassword():
     global currentMenu, pwdDict
     currentMenu = 2
     os.system("cls")
-    listener.stop()
-    name = input("Enter Password Name (Leave empty to cancel): ")
+    name = GetTextInput("Enter Password Name (Leave empty to cancel): ")
     if name == "":
-        StartListener()
         MainMenu()
         return
-    pwd = input("Enter Password: ")
+    pwd = GetTextInput("Enter Password: ")
     pwdDict[name] = pwd
     print(pwdDict)
-    StartListener()
-    MainMenu()
 
-def StartListener():
+def HearForInput():
     global listener
     listener = keyboard.Listener(on_press=on_press, on_release=on_release)
     listener.start()
 
+def GetTextInput(prompt):
+    global listener
+    listener.stop()
+    text = input(prompt)
+    HearForInput()
+    return text
+
 def Main():
-    global terminalSize
+    #Main Loop
+    global terminalSize, listener
     terminalSize = os.get_terminal_size()
     width = terminalSize.columns
 
@@ -96,19 +104,9 @@ def Main():
         print("-", end="")
     print(" LockBox")
     MainMenu()
-    StartListener()
-
-    while True:
-        action = actionQueue.get()
-        match action:
-            case "exit":
-                os.system("cls")
-                exit()
-            case "main_menu":
-                MainMenu()
-            case "password_list":
-                PasswordList()
-            case "add_password":
-                AddPassword()
+    #print("Console width:", width)
+    HearForInput()
+    while listener.is_alive():
+        pass
 
 Main()
