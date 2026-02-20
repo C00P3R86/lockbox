@@ -1,13 +1,13 @@
 import os
 import queue
 import msvcrt
+import json
 from pynput import keyboard
 
 terminalSize = 0
 startText = 'LockBox'
 currentMenu = 0
 listener = None
-pwdDict = {}
 actionQueue = queue.Queue()
 
 def on_press(key):
@@ -56,7 +56,7 @@ def MainMenu():
     print("2. Add Password (A)")
     print("3. Exit (E)")
 
-def PasswordList():
+def PasswordList(pwdDict):
     global currentMenu
     currentMenu = 1
     os.system("cls")
@@ -76,34 +76,68 @@ def AskForPwd():
     else:
         return pwd
 
-def AddPassword():
-    global currentMenu, pwdDict
+def AskForName():
+    name = input("Enter Password Name (Leave empty to cancel): ")
+    return name
+
+def CheckIfNameExists(name, pwdDict):
+    if name in pwdDict:
+        overwrite = input("Name already exists, do you want to overwrite? (y = yes / n = no")
+        if overwrite.lower() == "y":
+            return name
+        elif overwrite.lower() == "n":
+            print("Please input new Password Name: ")
+            AskForName()
+        else:
+            print("Invalid answer")
+            AskForName()
+    else:
+        return name
+
+def AddPassword(pwdDict):
+    global currentMenu
     currentMenu = 2
     os.system("cls")
     listener.stop()
     while msvcrt.kbhit():
         msvcrt.getwch()
-    name = input("Enter Password Name (Leave empty to cancel): ")
+    name = AskForName()
     if name == "":
         StartListener()
         MainMenu()
-        return
+        return pwdDict
+    CheckIfNameExists(name, pwdDict)
     pwd = AskForPwd()
     if pwd == None:
         StartListener()
         MainMenu()
-        return
+        return pwdDict
     pwdDict[name] = pwd
-    print(pwdDict)
     StartListener()
     MainMenu()
+    return pwdDict
 
 def StartListener():
     global listener
     listener = keyboard.Listener(on_press=on_press, on_release=on_release)
     listener.start()
 
+def LoadPasswords(pwdDict):
+    try:
+        with open("passwords.json", "r") as file:
+            pwdDict = json.load(file)
+            return pwdDict
+    except FileNotFoundError:
+            return pwdDict
+
+def SavePasswords(pwdDict):
+    with open("passwords.json", "w") as file:
+        json.dump(pwdDict, file)
+
 def Main():
+    pwdDict = {}
+    pwdDict = LoadPasswords(pwdDict)
+
     global terminalSize
     terminalSize = os.get_terminal_size()
     width = terminalSize.columns
@@ -128,8 +162,8 @@ def Main():
             case "main_menu":
                 MainMenu()
             case "password_list":
-                PasswordList()
+                PasswordList(pwdDict)
             case "add_password":
-                AddPassword()
-
+                pwdDict = AddPassword(pwdDict)
+                SavePasswords(pwdDict)
 Main()
